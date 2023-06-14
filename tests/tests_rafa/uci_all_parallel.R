@@ -69,7 +69,7 @@ uci <- function(sf_object,
                 bootstrap_border = FALSE,
                 showProgress = TRUE,
                 parallel = FALSE
-                ){
+){
   
   # check inputs
   checkmate::assert_class(sf_object, 'sf')
@@ -82,7 +82,7 @@ uci <- function(sf_object,
   checkmate::assert_string(dist_type)
   if(isFALSE(dist_type %in% c('spatial_link', 'euclidean'))){
     stop("dist_type must be either 'spatial_link' or 'euclidean'")
-    }
+  }
   
   # config progress bar
   pb_original <- pbapply::pboptions()
@@ -108,7 +108,7 @@ uci <- function(sf_object,
   
   # change projection to UTM
   sf_object <- suppressWarnings(sf::st_transform(sf_object, 3857))
-
+  
   ###### observed Location Coefficient -----------------------------------------
   
   # normalize distribution of variable
@@ -144,7 +144,7 @@ uci <- function(sf_object,
     # calculate distance matrix
     distance <- get_spatial_link_dist_matrix(sf_object)
   }
-
+  
   # Spatial separation index (venables)
   v_observed <- venables(var_x_norm, distance)
   
@@ -169,16 +169,16 @@ uci <- function(sf_object,
     
     # calculate distance matrix
     distance_border <- get_euclidean_dist_matrix(sf_border)
-  
-    } else if (dist_type == 'spatial_link') {
     
-      # find positions of cells in the border 
-      border_positions <- which(sf_object$border == 1, arr.ind=TRUE)
-      
-      # filter dist matrix keeping only border cells
-      distance_border <- distance[border_positions, border_positions]
-    }
-      
+  } else if (dist_type == 'spatial_link') {
+    
+    # find positions of cells in the border 
+    border_positions <- which(sf_object$border == 1, arr.ind=TRUE)
+    
+    # filter dist matrix keeping only border cells
+    distance_border <- distance[border_positions, border_positions]
+  }
+  
   
   ### HEURISTIC max venables considering full border
   if (isFALSE(bootstrap_border)) {
@@ -199,28 +199,40 @@ uci <- function(sf_object,
     number_busy_cells <- 2:51
     all_sim_input <- rep(number_busy_cells, 400)
     
-
-    #### calculate venables of all simulations and get the max value
     
-    ## run spatial simulations
-    all_sim <- lapply(
-      X = all_sim_input,
-      FUN = simulate_border_config,
-      sf_object = sf_border,
-      output = 'vector',
-      bootstrap_border = bootstrap_border)
+    # calculate venables of all simulations and get the max value
     
-      
-    ## calculate venables for all simulations
-    
-    # run sequentially
+    # Run sequentially or in parallel
     if (isFALSE(parallel)) {
+      
+      # run spatial simulations
+      all_sim <- lapply(
+        X = all_sim_input,
+        FUN = simulate_border_config,
+        sf_object = sf_border,
+        output = 'vector',
+        bootstrap_border = bootstrap_border)
+      
+      # calculate venables for all simulations
       all_sim_venables <- pbapply::pblapply(X = all_sim,
                                             FUN = venables,
                                             distance = distance_border)
     }
     # parallel
-    else if (isTRUE(parallel)) {
+    if (isTRUE(parallel)) {
+      
+      # run spatial simulations
+      # options(future.globals.maxSize = 891289600) # 850 MB
+      all_sim <- furrr::future_map(
+        .x = all_sim_input,
+        .f = simulate_border_config,
+        sf_object = sf_border,
+        output = 'vector',
+        bootstrap_border = bootstrap_border,
+        .progress = FALSE,
+        .options = furrr::furrr_options(seed = TRUE)
+      )
+      # calculate venables for all simulations
       all_sim_venables <- furrr::future_map(
         .x = all_sim,
         .f = venables,
@@ -229,7 +241,7 @@ uci <- function(sf_object,
       )
     }
     
-    # get the max value of venables spatial separation from all simulations
+    # get max venables spatial separation value from all simulations
     all_sim_venables <- unlist(all_sim_venables)
     max_venables <- max(all_sim_venables)
   }
@@ -254,4 +266,3 @@ uci <- function(sf_object,
   
   return(output_df)
 }
-  

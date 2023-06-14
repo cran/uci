@@ -6,8 +6,7 @@ knitr::opts_chunk$set(
 
 ## ---- eval = FALSE------------------------------------------------------------
 #  # from CRAN
-#  installed.packages('uci')
-#  
+#  install.packages('uci')
 #  
 #  # development version from GitHub
 #  remotes::install_github("ipeaGIT/uci")
