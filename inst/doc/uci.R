@@ -9,12 +9,12 @@ use_suggested_pkgs <- (requireNamespace("ggplot2",quietly = TRUE))
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  # from CRAN
-#  install.packages('uci')
-#  
-#  # development version from GitHub
-#  remotes::install_github("ipeaGIT/uci")
-#  
+# # from CRAN
+# install.packages('uci')
+# 
+# # development version from GitHub
+# remotes::install_github("ipeaGIT/uci")
+# 
 
 ## ----eval = TRUE, message = FALSE, warning = FALSE----------------------------
 library(uci)
