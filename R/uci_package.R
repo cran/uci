@@ -4,20 +4,18 @@
 #'
 #' @section Usage:
 #' Please check the vignettes and data documentation on the
-#' [website](https://ipeagit.github.io/uci/index.html).
+#' [website](https://ipea.github.io/uci/index.html).
 #'
-#' @docType package
 #' @name uci
 #' @aliases uci-package
 #'
 #' @importFrom utils globalVariables
 #' @importFrom stats dist
+#' @importFrom rlang abort
 "_PACKAGE"
 
 
 ## quiets concerns of R CMD check re: the .'s that appear in pipelines
 utils::globalVariables( c('dist',
-                          'from',
-                          'to',
                           'a') )
 
